@@ -2,7 +2,53 @@
 
 #include <iostream>
 #include <fstream>
-#define SAMPLE_INPUT
+#include <vector>
+#include <regex>
+#include <string>
+//#define SAMPLE_INPUT
+
+enum Direction
+{
+    LEFT,
+    RIGHT,
+    INVALID
+};
+
+struct Instruction
+{
+    Direction dir;
+    int amount = 0;
+};
+
+class Dial
+{
+public:
+    void ConsumeInstruction(const Instruction& instruction)
+    {
+        int modified_amount = instruction.amount % 100;
+        if (instruction.dir == Direction::LEFT)
+        {
+            modified_amount *= -1;
+        }
+
+        value += modified_amount;
+        if (value < 0)
+        {
+            value += 100;
+        }
+        else if (value >= 100)
+        {
+            value -= 100;
+        }
+    }
+
+    int GetValue() const
+    {
+        return value;
+    }
+private:
+    int value = 50;
+};
 
 int main()
 {
@@ -16,4 +62,29 @@ int main()
         std::cerr << "Cannot open file.";
         return 1;
     }
+    std::string line;
+    std::regex pattern("([LR])(\\d+)");
+    std::smatch match;
+
+    std::vector<Instruction> instructions;
+    while (std::getline(input_file, line))
+    {
+        if (std::regex_match(line, match, pattern))
+        {
+            char letter = match[1].str()[0];
+            int number = std::stoi(match[2].str());
+            instructions.emplace_back(Instruction{ letter == 'L' ? Direction::LEFT : Direction::RIGHT, number});
+            //std::cout << "Letter: " << letter << " | Number: " << number << std::endl;
+        }
+    }
+    
+    int num_zeroes = 0;
+    Dial dial;
+    for (const Instruction instruction : instructions)
+    {
+        dial.ConsumeInstruction(instruction);
+        num_zeroes += dial.GetValue() == 0 ? 1 : 0;
+    }
+
+    std::cout << num_zeroes << std::endl;
 }
